@@ -12,7 +12,14 @@
     <div class="card-stack" id="unexpected">UNEXPECTED JOURNEY</div>
   </div>
 
-  <script type="module" src="board.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="board.js"></script>
 </div>
+<button id="roll-dice" style="margin: 10px; padding: 10px 20px; font-size: 16px;">
+    🎲 Rzuć kostką
+</button>
+<div id="dice-result"></div>
+<button id="next-tile">Move</button>
+<button id="next-turn" disabled>Koniec tury</button>
 </body>
 </html>
