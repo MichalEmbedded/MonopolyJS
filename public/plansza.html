@@ -3,23 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <title>monopoly</title>
+    <link rel="stylesheet" href="/plansza.css" />
 </head>
-<link rel="stylesheet" href="plansza.css" />
 <body>
-<div id="board">
-  <div id="center">
-    <div class="card-stack" id="deeds">DEEDS OF MIDDLE EARTH</div>
-    <div class="card-stack" id="unexpected">UNEXPECTED JOURNEY</div>
-  </div>
+<div id="container">
+    <div id="board">
+        <div id="center">
+            <div class="card-stack" id="deeds">DEEDS OF MIDDLE EARTH</div>
+            <div class="card-stack" id="unexpected">UNEXPECTED JOURNEY</div>
+        </div>
+    </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script type="module" src="board.js"></script>
+    <div id="sidebar">
+        <button id="roll-dice">🎲 Rzuć kostką</button>
+        <button id="next-tile">Move</button>
+        <button id="next-turn" disabled>Koniec tury</button>
+        <div id="dice-result"></div>
+        <div id="turn-indicator"></div>
+    </div>
 </div>
-<button id="roll-dice" style="margin: 10px; padding: 10px 20px; font-size: 16px;">
-    🎲 Rzuć kostką
-</button>
-<div id="dice-result"></div>
-<button id="next-tile">Move</button>
-<button id="next-turn" disabled>Koniec tury</button>
+
+<script src="/socket.io/socket.io.js"></script>
+<script type="module" src="board.js"></script>
 </body>
 </html>

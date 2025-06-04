@@ -1,4 +1,4 @@
-import { tiles } from './tiles.js';
+import {TILE_TYPES, tiles} from './tiles.js';
 
 const socket = io();
 let currentPlayer = null;
@@ -13,11 +13,57 @@ socket.on('connect', () => {
             name,
             color,
             position: 0,
-            money: 1500
+            money: 1500,
+            properties: [],
+            inJail: false,
+            turnsInJail: 0
         };
         socket.emit('new-player', currentPlayer);
     });
 });
+
+function showBuyButton(tile, player) {
+    const allTiles = document.querySelectorAll('.tile');
+    const tileEl = allTiles[tile.id];
+
+    if (tileEl.querySelector('.buy-button')) return;
+
+    const button = document.createElement('button');
+    button.textContent = `Kup za ${tile.price}¤`;
+    button.className = 'buy-button';
+    button.style.marginTop = '4px';
+    button.style.padding = '2px 6px';
+    button.style.cursor = 'pointer';
+
+    button.addEventListener('click', () => {
+        if (player.money >= tile.price) {
+            player.money -= tile.price;
+            tile.owner = player.id;
+            player.properties.push(tile.id);
+
+            socket.emit('update-player', player);
+
+            button.remove();
+        } else {
+            alert('Nie masz wystarczająco pieniędzy!');
+        }
+    });
+
+    tileEl.appendChild(button);
+}
+
+
+function handleTileAction(player){
+    const tile = tiles[player.position];
+
+    if (tile.type === TILE_TYPES.PROPERTY || tile.type === TILE_TYPES.PUB || tile.type === TILE_TYPES.RING ){
+        if(tile.owner === null) {
+            showBuyButton(tile,player);
+        }else if(tile.owner !== player.id){
+            const rent = tile.rent[0]
+        }
+    }
+}
 
 // ------------------- RZUT KOSTKĄ -------------------
 let doubleCount = 0;
@@ -56,6 +102,7 @@ document.getElementById('roll-dice').addEventListener('click', () => {
         } else {
             currentPlayer.position = (currentPlayer.position + rollsum) % tiles.length;
             socket.emit('player-move', currentPlayer);
+            handleTileAction(currentPlayer);
 
             // jeśli dublet – pozwól rzucić ponownie
             if (isDouble) {
@@ -144,30 +191,60 @@ function showJoinPopup(onJoin) {
 
     const popup = document.createElement('div');
     popup.classList.add('popup');
+
+    const colors = [
+        { name: 'Różowy', value: '#ff69b4' },
+        { name: 'Czerwony', value: '#e74c3c' },
+        { name: 'Niebieski', value: '#3498db' },
+        { name: 'Zielony', value: '#2ecc71' },
+        { name: 'Czarny', value: '#000000' },
+        { name: 'Kremowy', value: '#f5deb3' }
+    ];
+
+    let selectedColor = colors[2].value; // domyślnie niebieski
+
+    const colorButtons = colors.map(c => `
+    <div class="color-choice" data-color="${c.value}" title="${c.name}"
+         style="
+            background: ${c.value};
+        "></div>
+`).join('');
+
+
     popup.innerHTML = `
-    <h2>Dołącz do gry</h2>
-    <input type="text" id="player-name" placeholder="Twoje imię" style="padding:5px; width: 80%; margin-bottom:10px;"><br>
-    <label for="player-color">Wybierz kolor pionka:</label><br>
-    <input type="color" id="player-color" value="#3498db" style="margin:10px;"><br>
-    <button id="join-game" style="padding:8px 16px; font-size:16px;">Dołącz</button>
-  `;
+        <h2>Dołącz do gry</h2>
+        <input type="text" id="player-name" placeholder="Twoje imię" style="padding:5px; width: 80%; margin-bottom:10px;"><br>
+        <label>Wybierz kolor pionka:</label><br>
+        <div id="color-options" style="margin:10px 0;">${colorButtons}</div>
+        <button id="join-game" style="padding:8px 16px; font-size:16px;">Dołącz</button>
+    `;
 
     overlay.appendChild(popup);
     document.body.appendChild(overlay);
 
+    // Obsługa wyboru koloru
+    const choices = popup.querySelectorAll('.color-choice');
+    choices.forEach(el => {
+        el.addEventListener('click', () => {
+            selectedColor = el.dataset.color;
+            choices.forEach(c => c.style.border = '2px solid #ccc');
+            el.style.border = '3px solid #000';
+        });
+    });
+
+    // Obsługa kliknięcia "Dołącz"
     document.getElementById('join-game').addEventListener('click', () => {
         const name = document.getElementById('player-name').value.trim();
-        const color = document.getElementById('player-color').value;
-
         if (name === '') {
             alert('Podaj swoje imię!');
             return;
         }
 
         document.body.removeChild(overlay);
-        onJoin({ name, color });
+        onJoin({ name, color: selectedColor });
     });
 }
+
 
 // ------------------- TWORZENIE PIONKA -------------------
 function createPawn(player) {
