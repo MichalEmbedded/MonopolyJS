@@ -169,6 +169,16 @@ body {
     z-index: 10;
 }
 
+.owner {
+    width: 20px;
+    height: 20px;
+    margin: auto;
+    margin-top: 2px;
+    border: 2px solid #000;
+    background-color: blue;
+    position: relative;
+    z-index: 10;
+}
 
 .pawn-label {
     font-size: 10px;

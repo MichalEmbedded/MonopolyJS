@@ -20,6 +20,7 @@ io.on('connection', (socket) => {
             socket.emit('join-denied', 'Gra ma już maksymalną liczbę graczy.');
             return;
         }
+
         players[socket.id] = playerData;
 
         if (!playerOrder.includes(socket.id)) {
@@ -30,6 +31,12 @@ io.on('connection', (socket) => {
 
         io.emit('update-players', Object.values(players));
         io.emit('current-turn', playerOrder[currentTurnIndex]);
+
+        if(Object.keys(players).length < 2) {
+            io.emit('block-start', 'Gra wymaga minimum 2 graczy!');
+        } else {
+            io.emit('unblock-start');
+        }
     })
 
     socket.on('end-turn', () => {

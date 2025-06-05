@@ -28,6 +28,19 @@ function showBuyButton(tile, player) {
 
     if (tileEl.querySelector('.buy-button')) return;
 
+    const priceEl = tileEl.querySelector('.tile-price');
+
+    let savedLogo = document.createElement('div');
+    savedLogo.classList.add('owner');
+    savedLogo.style.backgroundColor = player.color;
+    savedLogo.title = player.name;
+
+    let savedPrice = null;
+    if (priceEl) {
+        savedPrice = priceEl.cloneNode(true);
+        priceEl.remove();
+    }
+
     const button = document.createElement('button');
     button.textContent = `Kup za ${tile.price}¤`;
     button.className = 'buy-button';
@@ -44,12 +57,20 @@ function showBuyButton(tile, player) {
             socket.emit('update-player', player);
 
             button.remove();
+            tileEl.appendChild(savedLogo);
         } else {
             alert('Nie masz wystarczająco pieniędzy!');
         }
     });
 
     tileEl.appendChild(button);
+    tileEl.addEventListener('click', function handleMouseLeave() {
+        if (button.parentNode) button.remove();
+        if (savedPrice){
+            tileEl.appendChild(savedPrice);
+        }
+        tileEl.removeEventListener('click', handleMouseLeave);
+    });
 }
 
 
@@ -65,11 +86,28 @@ function handleTileAction(player){
     }
 }
 
+let isBlocked = false;
+
+socket.on('block-start', (message) => {
+    isBlocked = true;
+    alert(message);
+    document.getElementById('roll-dice').disabled = true;
+});
+
+socket.on('unblock-start', () => {
+    isBlocked = false;
+    if (isMyTurn){
+        document.getElementById('roll-dice').disabled = false;
+    }
+});
+
+
 // ------------------- RZUT KOSTKĄ -------------------
 let doubleCount = 0;
 
 document.getElementById('roll-dice').addEventListener('click', () => {
-    if (!currentPlayer) return;
+
+    if (!currentPlayer || isBlocked) return;
 
     document.getElementById('roll-dice').disabled = true;
     const roll1 = Math.floor(Math.random() * 6) + 1;
@@ -136,7 +174,8 @@ socket.on('current-turn', (playerId) => {
     }
 
     // Blokuj / odblokuj przyciski
-    document.getElementById('roll-dice').disabled = !isMyTurn;
+    document.getElementById('roll-dice').disabled = !isMyTurn || isBlocked;
+    document.getElementById('next-turn').disabled = !isMyTurn;
     document.getElementById('next-turn').disabled = !isMyTurn;
 });
 
@@ -264,8 +303,9 @@ function createPawn(player) {
 
 // ------------------- AKTUALIZACJA GRACZY -------------------
 socket.on('update-players', (playersList) => {
-    document.querySelectorAll('.pawn').forEach(p => p.remove());
-
+    document.querySelectorAll('.pawn').forEach(p => {
+        if (!p.classList.contains('owner-marker')) p.remove();
+    });
     playersList.forEach(player => {
         if (!player || typeof player.position !== 'number') return;
 
