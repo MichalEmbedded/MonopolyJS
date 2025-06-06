@@ -1,12 +1,14 @@
+// ------------------- IMPORT DANYCH PLANSZY -------------------
 import {TILE_TYPES, tiles} from './tiles.js';
 
-const socket = io();
-let currentPlayer = null;
+const socket = io(); // Połączenie z serwerem przez Socket.io
+let currentPlayer = null; // Dane bieżącego gracza
 
-// ------------------- POŁĄCZENIE -------------------
+// ------------------- POŁĄCZENIE Z SERWEREM -------------------
 socket.on('connect', () => {
     console.log('Połączono z serwerem, ID:', socket.id);
 
+    // Pokazuje popup do wpisania imienia i wyboru koloru
     showJoinPopup(({ name, color }) => {
         currentPlayer = {
             id: socket.id,
@@ -18,29 +20,33 @@ socket.on('connect', () => {
             inJail: false,
             turnsInJail: 0
         };
-        socket.emit('new-player', currentPlayer);
+        socket.emit('new-player', currentPlayer); // Wysyłamy dane nowego gracza na serwer
     });
 });
 
+// ------------------- POKAZANIE PRZYCISKU "KUP" -------------------
 function showBuyButton(tile, player) {
     const allTiles = document.querySelectorAll('.tile');
     const tileEl = allTiles[tile.id];
 
-    if (tileEl.querySelector('.buy-button')) return;
+    if (tileEl.querySelector('.buy-button')) return; // Nie pokazuj drugi raz przycisku
 
     const priceEl = tileEl.querySelector('.tile-price');
 
+    // Tworzenie znacznika właściciela
     let savedLogo = document.createElement('div');
     savedLogo.classList.add('owner');
     savedLogo.style.backgroundColor = player.color;
     savedLogo.title = player.name;
 
+    // Usuwanie ceny i zachowanie jej do ewentualnego przywrócenia
     let savedPrice = null;
     if (priceEl) {
         savedPrice = priceEl.cloneNode(true);
         priceEl.remove();
     }
 
+    // Tworzenie przycisku "Kup za..."
     const button = document.createElement('button');
     button.textContent = `Kup za ${tile.price}¤`;
     button.className = 'buy-button';
@@ -48,6 +54,7 @@ function showBuyButton(tile, player) {
     button.style.padding = '2px 6px';
     button.style.cursor = 'pointer';
 
+    // Obsługa kliknięcia "Kup"
     button.addEventListener('click', () => {
         if (player.money >= tile.price) {
             player.money -= tile.price;
@@ -57,43 +64,38 @@ function showBuyButton(tile, player) {
             socket.emit('update-player', player);
 
             button.remove();
-            tileEl.appendChild(savedLogo);
+            tileEl.appendChild(savedLogo); // Dodanie oznaczenia właściciela
         } else {
             alert('Nie masz wystarczająco pieniędzy!');
         }
     });
 
     tileEl.appendChild(button);
-    tileEl.addEventListener('click', function handleMouseLeave() {
-        if (button.parentNode) button.remove();
-        if (savedPrice){
-            tileEl.appendChild(savedPrice);
-        }
-        tileEl.removeEventListener('click', handleMouseLeave);
-    });
 }
 
-
+// ------------------- SPRAWDZENIE POLECENIA NA POLU -------------------
 function handleTileAction(player){
     const tile = tiles[player.position];
 
     if (tile.type === TILE_TYPES.PROPERTY || tile.type === TILE_TYPES.PUB || tile.type === TILE_TYPES.RING ){
         if(tile.owner === null) {
             showBuyButton(tile,player);
-        }else if(tile.owner !== player.id){
-            const rent = tile.rent[0]
+        } else if(tile.owner !== player.id){
+            const rent = tile.rent[0]; // TODO: obsługa płacenia czynszu
         }
     }
 }
 
 let isBlocked = false;
 
+// ------------------- BLOKADA GRY DLA POJEDYNCZEGO GRACZA -------------------
 socket.on('block-start', (message) => {
     isBlocked = true;
     alert(message);
     document.getElementById('roll-dice').disabled = true;
 });
 
+// ------------------- ODMROŻENIE GRY -------------------
 socket.on('unblock-start', () => {
     isBlocked = false;
     if (isMyTurn){
@@ -101,12 +103,10 @@ socket.on('unblock-start', () => {
     }
 });
 
-
-// ------------------- RZUT KOSTKĄ -------------------
+// ------------------- OBSŁUGA RZUTU KOSTKĄ -------------------
 let doubleCount = 0;
 
 document.getElementById('roll-dice').addEventListener('click', () => {
-
     if (!currentPlayer || isBlocked) return;
 
     document.getElementById('roll-dice').disabled = true;
@@ -121,6 +121,7 @@ document.getElementById('roll-dice').addEventListener('click', () => {
     const nextTile = document.getElementById('next-tile');
     nextTile.style.display = 'flex';
 
+    // Obsługa ruchu po kliknięciu w "Idź dalej"
     const newNextTile = nextTile.cloneNode(true);
     nextTile.parentNode.replaceChild(newNextTile, nextTile);
 
@@ -132,39 +133,47 @@ document.getElementById('roll-dice').addEventListener('click', () => {
             doubleCount = 0;
         }
 
-        // 3 dublety = więzienie
+        // Trzeci dublet — więzienie
         if (doubleCount >= 3) {
-            currentPlayer.position = 10; // pole więzienia (Orthanc)
+            currentPlayer.position = 10; // Orthanc
             wynik.textContent = '3 doublets in a row! You are sentenced for ORTHANC TOWER';
             doubleCount = 0;
         } else {
             currentPlayer.position = (currentPlayer.position + rollsum) % tiles.length;
             socket.emit('player-move', currentPlayer);
             handleTileAction(currentPlayer);
-
-            // jeśli dublet – pozwól rzucić ponownie
-            if (isDouble) {
-                wynik.textContent += ' Rzuć ponownie!';
-                // Można aktywować przycisk rzutu ponownie tutaj
-                // lub po prostu nie wyłączać go
-            } else {
-                // Tu można zakończyć turę i przejść do następnego gracza
-            }
         }
 
         newNextTile.style.display = 'none';
     });
 });
 
-// ------------------- KOGO TURA REAKCJA -------------------
+// ------------------- OBSŁUGA KOŃCA TURY -------------------
 let isMyTurn = false;
 
 document.getElementById('next-turn').addEventListener('click', () => {
     if (isMyTurn) {
+        // Usuwanie przycisków "Kup" z planszy
+        document.querySelectorAll('.buy-button').forEach(btn => btn.remove());
+
+        // Przywracanie ceny na polach niekupionych
+        tiles.forEach(tile => {
+            if (!tile.owner) {
+                const tileEl = document.querySelectorAll('.tile')[tile.id];
+                if (!tileEl.querySelector('.tile-price') && tile.price) {
+                    const price = document.createElement('div');
+                    price.classList.add('tile-price');
+                    price.textContent = `${tile.price} ¤`;
+                    tileEl.appendChild(price);
+                }
+            }
+        });
+
         socket.emit('end-turn');
     }
 });
 
+// ------------------- OBSŁUGA INFORMACJI KTO MA TURĘ -------------------
 socket.on('current-turn', (playerId) => {
     isMyTurn = currentPlayer && currentPlayer.id === playerId;
 
@@ -173,14 +182,12 @@ socket.on('current-turn', (playerId) => {
         turnDisplay.textContent = isMyTurn ? 'Twoja tura' : `Tura innego gracza`;
     }
 
-    // Blokuj / odblokuj przyciski
+    // Włączenie / wyłączenie przycisków
     document.getElementById('roll-dice').disabled = !isMyTurn || isBlocked;
-    document.getElementById('next-turn').disabled = !isMyTurn;
     document.getElementById('next-turn').disabled = !isMyTurn;
 });
 
-
-// ------------------- TWORZENIE PLANSZY -------------------
+// ------------------- TWORZENIE STRUKTURY PLANSZY -------------------
 const rowConfig = [
     { id: 0, name: 'row-0', area: 'a' },
     { id: 10, name: 'row-1', area: 'b' },
@@ -196,6 +203,7 @@ rowConfig.forEach(({ id, name, area }) => {
     document.getElementById('board').appendChild(rowDiv);
 });
 
+// ------------------- TWORZENIE KAFELKÓW -------------------
 tiles.forEach(tile => {
     const tileEl = document.createElement('div');
     tileEl.classList.add('tile');
@@ -223,7 +231,7 @@ tiles.forEach(tile => {
     document.getElementById(rowId).appendChild(tileEl);
 });
 
-// ------------------- POPUP DOŁĄCZANIA -------------------
+// ------------------- POPUP DO DOŁĄCZENIA DO GRY -------------------
 function showJoinPopup(onJoin) {
     const overlay = document.createElement('div');
     overlay.classList.add('join');
@@ -240,15 +248,11 @@ function showJoinPopup(onJoin) {
         { name: 'Kremowy', value: '#f5deb3' }
     ];
 
-    let selectedColor = colors[2].value; // domyślnie niebieski
+    let selectedColor = colors[2].value;
 
     const colorButtons = colors.map(c => `
-    <div class="color-choice" data-color="${c.value}" title="${c.name}"
-         style="
-            background: ${c.value};
-        "></div>
-`).join('');
-
+        <div class="color-choice" data-color="${c.value}" title="${c.name}" style="background: ${c.value};"></div>
+    `).join('');
 
     popup.innerHTML = `
         <h2>Dołącz do gry</h2>
@@ -261,7 +265,7 @@ function showJoinPopup(onJoin) {
     overlay.appendChild(popup);
     document.body.appendChild(overlay);
 
-    // Obsługa wyboru koloru
+    // Wybór koloru
     const choices = popup.querySelectorAll('.color-choice');
     choices.forEach(el => {
         el.addEventListener('click', () => {
@@ -271,7 +275,7 @@ function showJoinPopup(onJoin) {
         });
     });
 
-    // Obsługa kliknięcia "Dołącz"
+    // Obsługa kliknięcia „Dołącz”
     document.getElementById('join-game').addEventListener('click', () => {
         const name = document.getElementById('player-name').value.trim();
         if (name === '') {
@@ -284,8 +288,7 @@ function showJoinPopup(onJoin) {
     });
 }
 
-
-// ------------------- TWORZENIE PIONKA -------------------
+// ------------------- TWORZENIE PIONKA NA PLANSZY -------------------
 function createPawn(player) {
     const pawn = document.createElement('div');
     pawn.classList.add('pawn');
@@ -301,7 +304,7 @@ function createPawn(player) {
     return pawn;
 }
 
-// ------------------- AKTUALIZACJA GRACZY -------------------
+// ------------------- ODBIÓR AKTUALNEJ LISTY GRACZY -------------------
 socket.on('update-players', (playersList) => {
     document.querySelectorAll('.pawn').forEach(p => {
         if (!p.classList.contains('owner-marker')) p.remove();
