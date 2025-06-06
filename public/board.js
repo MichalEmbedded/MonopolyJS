@@ -61,6 +61,7 @@ function showBuyButton(tile, player) {
             tile.owner = player.id;
             player.properties.push(tile.id);
 
+            socket.emit('property-bought', { tileId: tile.id, owner: currentPlayer });
             socket.emit('update-player', player);
 
             button.remove();
@@ -167,6 +168,18 @@ document.getElementById('next-turn').addEventListener('click', () => {
                     tileEl.appendChild(price);
                 }
             }
+            // Dodaj znacznik na kupione pole
+            // if (tile.owner){
+            //     //const ownerPlayer = playersList.find(p => p.id === tile.owner);
+            //     const tileNow = document.querySelectorAll('.tile')[tile.id];
+            //     if (!tileNow.querySelector('.owner')) {
+            //         const savedLogo = document.createElement('div');
+            //         savedLogo.classList.add('owner');
+            //         savedLogo.style.backgroundColor = currentPlayer.color;
+            //         savedLogo.title = currentPlayer.name;
+            //         tileNow.appendChild(savedLogo);
+            //     }
+            // }
         });
 
         socket.emit('end-turn');
@@ -318,6 +331,17 @@ socket.on('update-players', (playersList) => {
             tile.appendChild(pawn);
         }
     });
+});
+
+socket.on('property-update', ({ tileId, owner }) => {
+    const tileEl = document.querySelectorAll('.tile')[tileId];
+    if (!tileEl.querySelector('.owner')) {
+        const marker = document.createElement('div');
+        marker.classList.add('owner');
+        marker.style.backgroundColor = owner.color;
+        marker.title = owner.name;
+        tileEl.appendChild(marker);
+    }
 });
 
 // ------------------- ODRZUCENIE DOŁĄCZENIA -------------------

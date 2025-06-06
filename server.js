@@ -70,13 +70,17 @@ io.on('connection', (socket) => {
         io.emit('current-turn', playerOrder[currentTurnIndex] || null);
     });
 
-
     socket.on('player-move', (updatedPlayer) => {
         if (players[socket.id]) {
             players[socket.id] = updatedPlayer;
             io.emit('update-players', Object.values(players));
         }
     });
+
+    socket.on('property-bought', ({ tileId, owner }) => {
+        io.emit('property-update', { tileId, owner });
+    });
+
 
 });
 
