@@ -334,6 +334,11 @@ socket.on('update-players', (playersList) => {
 });
 
 socket.on('property-update', ({ tileId, owner }) => {
+
+    const tile = tiles[tileId];
+    if (!tile) return;
+    tile.owner = owner.id;
+
     const tileEl = document.querySelectorAll('.tile')[tileId];
     if (!tileEl.querySelector('.owner')) {
         const marker = document.createElement('div');
