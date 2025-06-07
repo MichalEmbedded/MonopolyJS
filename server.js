@@ -11,6 +11,7 @@ app.use(express.static('public'));
 let playerOrder = [];
 let currentTurnIndex = 0;
 const players = {};
+let usedColors = new Set();
 
 io.on('connection', (socket) => {
     console.log('Gracz połączony:', socket.id);
@@ -38,6 +39,14 @@ io.on('connection', (socket) => {
             io.emit('unblock-start');
         }
     })
+
+    socket.on('color-blocked', ({ selectedColor }) => {
+        console.log('PRZED DODANIEM:', usedColors, typeof usedColors);
+        usedColors.add(selectedColor);
+        console.log('PO DODANIU:', usedColors, typeof usedColors);
+        io.emit('update-blocked-colors', Array.from(usedColors));
+    });
+
 
     socket.on('end-turn', () => {
         if(socket.id !== playerOrder[currentTurnIndex]) return;

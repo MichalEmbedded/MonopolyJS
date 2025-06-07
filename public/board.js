@@ -2,7 +2,9 @@
 import {TILE_TYPES, tiles} from './tiles.js';
 
 const socket = io(); // Połączenie z serwerem przez Socket.io
+window.socket = socket;
 let currentPlayer = null; // Dane bieżącego gracza
+let latestUsedColors = [];
 
 // ------------------- POŁĄCZENIE Z SERWEREM -------------------
 socket.on('connect', () => {
@@ -274,6 +276,8 @@ function showJoinPopup(onJoin) {
         <div id="color-options" style="margin:10px 0;">${colorButtons}</div>
         <button id="join-game" style="padding:8px 16px; font-size:16px;">Dołącz</button>
     `;
+    //const choiceColor = popup.querySelectorAll('.color-choice');
+
 
     overlay.appendChild(popup);
     document.body.appendChild(overlay);
@@ -295,7 +299,7 @@ function showJoinPopup(onJoin) {
             alert('Podaj swoje imię!');
             return;
         }
-
+        socket.emit('color-blocked', {selectedColor})
         document.body.removeChild(overlay);
         onJoin({ name, color: selectedColor });
     });
@@ -356,6 +360,22 @@ socket.on('property-update', ({ tileId, owner }) => {
     }
 
 });
+
+socket.on('update-blocked-colors', (usedColors) => {
+    latestUsedColors = usedColors;
+    console.log(usedColors);
+    let colors = document.querySelectorAll('.color-choice')
+    colors.forEach(choice => {
+        const color = choice.dataset.color;
+        const isBlocked = usedColors.includes(color);
+
+        if (isBlocked) {
+            choice.style.pointerEvents = 'none';
+            choice.title += ' (zajety)';
+        }
+    });
+});
+
 
 // ------------------- ODRZUCENIE DOŁĄCZENIA -------------------
 socket.on('join-denied', (message) => {
