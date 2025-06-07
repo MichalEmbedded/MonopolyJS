@@ -15,7 +15,9 @@ const players = {};
 io.on('connection', (socket) => {
     console.log('Gracz połączony:', socket.id);
 
-    socket.on('new-player', (playerData) => {
+    socket.emit('color-chosen', Object.values(players));
+
+    socket.on('color-chosen', (playerData) => {
         if(Object.keys(players).length >=4) {
             socket.emit('join-denied', 'Gra ma już maksymalną liczbę graczy.');
             return;
@@ -80,7 +82,6 @@ io.on('connection', (socket) => {
     socket.on('property-bought', ({ tileId, owner }) => {
         io.emit('property-update', { tileId, owner });
     });
-
 
 });
 

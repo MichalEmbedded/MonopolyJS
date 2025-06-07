@@ -3,25 +3,29 @@ import {TILE_TYPES, tiles} from './tiles.js';
 
 const socket = io(); // Połączenie z serwerem przez Socket.io
 let currentPlayer = null; // Dane bieżącego gracza
+let globalPlayersList = [];
 
 // ------------------- POŁĄCZENIE Z SERWEREM -------------------
 socket.on('connect', () => {
     console.log('Połączono z serwerem, ID:', socket.id);
 
-    // Pokazuje popup do wpisania imienia i wyboru koloru
-    showJoinPopup(({ name, color }) => {
-        currentPlayer = {
-            id: socket.id,
-            name,
-            color,
-            position: 0,
-            money: 1500,
-            properties: [],
-            inJail: false,
-            turnsInJail: 0
-        };
-        socket.emit('new-player', currentPlayer); // Wysyłamy dane nowego gracza na serwer
-    });
+    // const usedColors = globalPlayersList.map(p => p.color);
+    //
+    // // Pokazuje popup do wpisania imienia i wyboru koloru
+    // showJoinPopup(({ name, color }) => {
+    //     currentPlayer = {
+    //         id: socket.id,
+    //         name,
+    //         color,
+    //         position: 0,
+    //         money: 1500,
+    //         properties: [],
+    //         inJail: false,
+    //         turnsInJail: 0
+    //     }
+    //     socket.emit('new-player', currentPlayer); // Wysyłamy dane nowego gracza na serwer
+    // }, usedColors);
+
 });
 
 // ------------------- POKAZANIE PRZYCISKU "KUP" -------------------
@@ -168,18 +172,6 @@ document.getElementById('next-turn').addEventListener('click', () => {
                     tileEl.appendChild(price);
                 }
             }
-            // Dodaj znacznik na kupione pole
-            // if (tile.owner){
-            //     //const ownerPlayer = playersList.find(p => p.id === tile.owner);
-            //     const tileNow = document.querySelectorAll('.tile')[tile.id];
-            //     if (!tileNow.querySelector('.owner')) {
-            //         const savedLogo = document.createElement('div');
-            //         savedLogo.classList.add('owner');
-            //         savedLogo.style.backgroundColor = currentPlayer.color;
-            //         savedLogo.title = currentPlayer.name;
-            //         tileNow.appendChild(savedLogo);
-            //     }
-            // }
         });
 
         socket.emit('end-turn');
@@ -245,7 +237,7 @@ tiles.forEach(tile => {
 });
 
 // ------------------- POPUP DO DOŁĄCZENIA DO GRY -------------------
-function showJoinPopup(onJoin) {
+function showJoinPopup(onJoin, usedColors = []) {
     const overlay = document.createElement('div');
     overlay.classList.add('join');
 
@@ -281,6 +273,13 @@ function showJoinPopup(onJoin) {
     // Wybór koloru
     const choices = popup.querySelectorAll('.color-choice');
     choices.forEach(el => {
+        const color = el.dataset.color;
+
+        if (usedColors.includes(color)) {
+            el.style.opacity = 0.4;
+            el.style.pointerEvents = 'none';
+            el.title += ' (zajęty)';
+        }
         el.addEventListener('click', () => {
             selectedColor = el.dataset.color;
             choices.forEach(c => c.style.border = '2px solid #ccc');
@@ -319,6 +318,8 @@ function createPawn(player) {
 
 // ------------------- ODBIÓR AKTUALNEJ LISTY GRACZY -------------------
 socket.on('update-players', (playersList) => {
+    globalPlayersList = playersList;
+
     document.querySelectorAll('.pawn').forEach(p => {
         if (!p.classList.contains('owner-marker')) p.remove();
     });
@@ -356,6 +357,26 @@ socket.on('property-update', ({ tileId, owner }) => {
     }
 
 });
+
+socket.on('color-chosen', (playersList) => {
+
+    const usedColors = playersList.map(p => p.color);
+
+    showJoinPopup(({ name, color }) => {
+        currentPlayer = {
+            id: socket.id,
+            name,
+            color,
+            position: 0,
+            money: 1500,
+            properties: [],
+            inJail: false,
+            turnsInJail: 0
+        };
+        socket.emit('new-player', currentPlayer);
+    }, usedColors);
+
+})
 
 // ------------------- ODRZUCENIE DOŁĄCZENIA -------------------
 socket.on('join-denied', (message) => {
