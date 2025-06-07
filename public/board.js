@@ -340,6 +340,13 @@ socket.on('property-update', ({ tileId, owner }) => {
     tile.owner = owner.id;
 
     const tileEl = document.querySelectorAll('.tile')[tileId];
+    if (!tileEl) return;
+
+    const priceEl = tileEl.querySelector('.tile-price');
+    if (priceEl) {
+        priceEl.remove();
+    }
+
     if (!tileEl.querySelector('.owner')) {
         const marker = document.createElement('div');
         marker.classList.add('owner');
@@ -347,6 +354,7 @@ socket.on('property-update', ({ tileId, owner }) => {
         marker.title = owner.name;
         tileEl.appendChild(marker);
     }
+
 });
 
 // ------------------- ODRZUCENIE DOŁĄCZENIA -------------------
