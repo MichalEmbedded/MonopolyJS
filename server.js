@@ -16,6 +16,8 @@ let usedColors = new Set();
 io.on('connection', (socket) => {
     console.log('Gracz połączony:', socket.id);
 
+    socket.emit('update-blocked-colors', Array.from(usedColors));
+
     socket.on('new-player', (playerData) => {
         if(Object.keys(players).length >=4) {
             socket.emit('join-denied', 'Gra ma już maksymalną liczbę graczy.');
@@ -58,6 +60,12 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('Gracz rozłączony:', socket.id);
 
+        const player = players[socket.id];
+        if (player) {
+            usedColors.delete(player.color);
+        }
+        console.log("TEST KOLORÓW: ", usedColors);
+
         delete players[socket.id];
 
         const index = playerOrder.indexOf(socket.id);
@@ -74,9 +82,10 @@ io.on('connection', (socket) => {
         } else {
             currentTurnIndex = currentTurnIndex % playerOrder.length;
         }
-
+        io.emit('update-blocked-colors', Array.from(usedColors));
         io.emit('update-players', Object.values(players));
         io.emit('current-turn', playerOrder[currentTurnIndex] || null);
+
     });
 
     socket.on('player-move', (updatedPlayer) => {

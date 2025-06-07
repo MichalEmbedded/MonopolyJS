@@ -4,7 +4,7 @@ import {TILE_TYPES, tiles} from './tiles.js';
 const socket = io(); // Połączenie z serwerem przez Socket.io
 window.socket = socket;
 let currentPlayer = null; // Dane bieżącego gracza
-let latestUsedColors = [];
+let globalUsedColors = [];
 
 // ------------------- POŁĄCZENIE Z SERWEREM -------------------
 socket.on('connect', () => {
@@ -282,6 +282,8 @@ function showJoinPopup(onJoin) {
     overlay.appendChild(popup);
     document.body.appendChild(overlay);
 
+    applyColorLocks(globalUsedColors); // zablokuje przyciski, jeśli są
+
     // Wybór koloru
     const choices = popup.querySelectorAll('.color-choice');
     choices.forEach(el => {
@@ -327,7 +329,8 @@ socket.on('update-players', (playersList) => {
         if (!p.classList.contains('owner-marker')) p.remove();
     });
     playersList.forEach(player => {
-        if (!player || typeof player.position !== 'number') return;
+        if (!player || typeof player.position !== 'number')return;
+
 
         const tile = document.querySelectorAll('.tile')[player.position];
         if (tile) {
@@ -362,19 +365,28 @@ socket.on('property-update', ({ tileId, owner }) => {
 });
 
 socket.on('update-blocked-colors', (usedColors) => {
-    latestUsedColors = usedColors;
-    console.log(usedColors);
-    let colors = document.querySelectorAll('.color-choice')
-    colors.forEach(choice => {
-        const color = choice.dataset.color;
-        const isBlocked = usedColors.includes(color);
+    globalUsedColors = usedColors;
+    console.log('Zablokowane kolory:', usedColors);
+    applyColorLocks(usedColors); // próba natychmiastowego zablokowania
+});
 
-        if (isBlocked) {
+
+function applyColorLocks(usedColors) {
+    const choices = document.querySelectorAll('.color-choice');
+    if (!choices.length) return;
+
+    choices.forEach(choice => {
+        const color = choice.dataset.color;
+        if (usedColors.includes(color)) {
             choice.style.pointerEvents = 'none';
-            choice.title += ' (zajety)';
+            choice.style.opacity = 0.4;
+            if (!choice.title.includes('zajęty')) {
+                choice.title += ' (zajęty)';
+            }
         }
     });
-});
+}
+
 
 
 // ------------------- ODRZUCENIE DOŁĄCZENIA -------------------
