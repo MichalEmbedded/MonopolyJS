@@ -150,7 +150,7 @@ function showPayButton(tile, player) {
                         t.owner = null;
 
                         socket.emit('update-player', player);
-                        socket.emit('property-update', { tileId: t.id, owner: null });
+                        socket.emit('property-bought', { tileId: t.id, owner: null });
 
                         document.body.removeChild(sellPopup);
                     });
@@ -176,6 +176,11 @@ function showPayButton(tile, player) {
 
             paybutton.remove();
             document.getElementById('next-turn').disabled = false;
+            if (doubleCount > 0) {
+                document.getElementById('roll-dice').disabled = false;
+            }else{
+                document.getElementById('roll-dice').disabled = true;
+            }
 
         }
         console.log("Płacący:", player.name, player.color);
@@ -467,10 +472,10 @@ socket.on('update-players', (playersList) => {
 });
 
 socket.on('property-update', ({ tileId, owner }) => {
-
     const tile = tiles[tileId];
     if (!tile) return;
-    tile.owner = owner.id;
+
+    tile.owner = owner ? owner.id : null;
 
     const tileEl = document.querySelectorAll('.tile')[tileId];
     if (!tileEl) return;
@@ -480,14 +485,16 @@ socket.on('property-update', ({ tileId, owner }) => {
         priceEl.remove();
     }
 
-    if (!tileEl.querySelector('.owner')) {
+    const existingMarker = tileEl.querySelector('.owner');
+    if (existingMarker) existingMarker.remove();
+
+    if (owner) {
         const marker = document.createElement('div');
         marker.classList.add('owner');
         marker.style.backgroundColor = owner.color;
         marker.title = owner.name;
         tileEl.appendChild(marker);
     }
-
 });
 
 socket.on('update-blocked-colors', (usedColors) => {
