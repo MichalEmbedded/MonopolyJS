@@ -49,7 +49,6 @@ io.on('connection', (socket) => {
         io.emit('update-blocked-colors', Array.from(usedColors));
     });
 
-
     socket.on('end-turn', () => {
         if(socket.id !== playerOrder[currentTurnIndex]) return;
 
@@ -92,6 +91,15 @@ io.on('connection', (socket) => {
         if (players[socket.id]) {
             players[socket.id] = updatedPlayer;
             io.emit('update-players', Object.values(players));
+        }
+    });
+
+    socket.on('update-player', (updatedPlayer) => {
+        const id = updatedPlayer.id; // zawsze używamy id aktualnego połączenia
+        if (players[id]) {
+            players[id] = updatedPlayer;
+            io.emit('update-players', Object.values(players));
+            io.emit('update-money', Object.values(players));
         }
     });
 

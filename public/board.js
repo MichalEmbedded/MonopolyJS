@@ -81,6 +81,10 @@ function showBuyButton(tile, player) {
 
 function showPayButton(tile, player) {
 
+    const owner = globalPlayersList.find(p => p.id === tile.owner);
+    console.log("Płacący:", player.name, player.color);
+    console.log("Właściciel:", owner.name, owner.color);
+
     document.getElementById('next-turn').disabled = true;
 
     const allTiles = document.querySelectorAll('.tile');
@@ -174,6 +178,8 @@ function showPayButton(tile, player) {
             document.getElementById('next-turn').disabled = false;
 
         }
+        console.log("Płacący:", player.name, player.color);
+        console.log("Właściciel:", owner.name, owner.color);
 
         socket.emit('pay-rent', { tileId: tile.id, currentPlayer: player });
         socket.emit('update-player', player);
@@ -488,6 +494,16 @@ socket.on('update-blocked-colors', (usedColors) => {
     globalUsedColors = usedColors;
     console.log('Zablokowane kolory:', usedColors);
     applyColorLocks(usedColors); // próba natychmiastowego zablokowania
+});
+
+socket.on('update-money', (playersList) => {
+    const moneyEl = document.getElementById('moneygood');
+    if (!moneyEl || !currentPlayer) return;
+
+    const me = playersList.find(p => p.id === currentPlayer.id);
+    if (me) {
+        moneyEl.textContent = `💰 ${me.money}¤`;
+    }
 });
 
 socket.on('rent-update', ({ tileId, currentPlayer }) => {
