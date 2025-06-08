@@ -5,6 +5,7 @@ const socket = io(); // Połączenie z serwerem przez Socket.io
 window.socket = socket;
 let currentPlayer = null; // Dane bieżącego gracza
 let globalUsedColors = [];
+let globalPlayersList = [];
 
 // ------------------- POŁĄCZENIE Z SERWEREM -------------------
 socket.on('connect', () => {
@@ -76,6 +77,112 @@ function showBuyButton(tile, player) {
     tileEl.appendChild(button);
 }
 
+// ------------------- POKAZANIE PRZYCISKU "PAY" -------------------
+
+function showPayButton(tile, player) {
+
+    const allTiles = document.querySelectorAll('.tile');
+    const tileEl = allTiles[tile.id];
+
+    if (tileEl.querySelector('.pay-button')) return;
+
+    const rentAmount = tile.rent[0];
+
+    const paybutton = document.createElement('button');
+    paybutton.textContent = `Zapłać ${rentAmount}¤`; //TODO: OBSŁUGA RENT [1,2,3,ITD]
+    paybutton.className = 'pay-button';
+    paybutton.style.marginTop = '4px';
+    paybutton.style.padding = '2px 6px';
+    paybutton.style.cursor = 'pointer';
+
+
+    paybutton.addEventListener('click', () => {
+
+        const owner = globalPlayersList.find(p => p.id === tile.owner);
+
+        if(rentAmount > player.money) {
+            alert('Nie masz wystarczająco pieniędzy!');
+            const playerOwnedTiles = tiles.filter(tile => tile.owner === player.id);
+
+            if (playerOwnedTiles.length > 0) {
+                const sellPopup = document.createElement('div');
+                sellPopup.style.position = 'fixed';
+                sellPopup.style.top = '0';
+                sellPopup.style.left = '0';
+                sellPopup.style.width = '100%';
+                sellPopup.style.height = '100%';
+                sellPopup.style.background = 'rgba(0,0,0,0.6)';
+                sellPopup.style.display = 'flex';
+                sellPopup.style.alignItems = 'center';
+                sellPopup.style.justifyContent = 'center';
+                sellPopup.style.zIndex = '10000';
+
+                const content = document.createElement('div');
+                content.style.background = '#fff';
+                content.style.padding = '20px';
+                content.style.borderRadius = '8px';
+                content.style.maxWidth = '400px';
+                content.style.maxHeight = '80vh';
+                content.style.overflowY = 'auto';
+
+                content.innerHTML = `<h3>Sprzedaj pole</h3><table style="width:100%; border-collapse: collapse;">
+        <thead><tr><th>Nazwa</th><th>Cena</th><th></th></tr></thead><tbody></tbody></table>`;
+
+                const tbody = content.querySelector('tbody');
+
+                playerOwnedTiles.forEach(t => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+            <td style="padding: 5px;">${t.name}</td>
+            <td style="padding: 5px;">${Math.floor(t.price * 0.5)}¤</td>
+            <td style="padding: 5px;"><button>Sprzedaj</button></td>
+        `;
+
+                    tr.querySelector('button').addEventListener('click', () => {
+                        // sprzedaż pola
+                        player.money += Math.floor(t.price * 0.5);
+                        t.owner = null;
+
+                        socket.emit('update-player', player);
+                        socket.emit('property-update', { tileId: t.id, owner: null });
+
+                        document.body.removeChild(sellPopup);
+                    });
+
+                    tbody.appendChild(tr);
+                });
+
+                sellPopup.appendChild(content);
+                document.body.appendChild(sellPopup);
+            }
+
+            return;
+        }
+        else{
+            console.log(player.money);
+            console.log(owner.money);
+
+            player.money -= rentAmount;
+            owner.money += rentAmount;
+
+            console.log(player.money);
+            console.log(owner.money);
+
+            paybutton.remove();
+
+        }
+
+        socket.emit('pay-rent', { tileId: tile.id, currentPlayer: player });
+        socket.emit('update-player', player);
+        socket.emit('update-player', owner);
+
+        console.log(player.money);
+        console.log(owner.money);
+    });
+    tileEl.appendChild(paybutton);
+
+}
+
 // ------------------- SPRAWDZENIE POLECENIA NA POLU -------------------
 function handleTileAction(player){
     const tile = tiles[player.position];
@@ -84,7 +191,8 @@ function handleTileAction(player){
         if(tile.owner === null) {
             showBuyButton(tile,player);
         } else if(tile.owner !== player.id){
-            const rent = tile.rent[0]; // TODO: obsługa płacenia czynszu
+            console.log('Wywołuję showPayButton dla pola:', tile.name);
+            showPayButton(tile,player);
         }
     }
 }
@@ -112,6 +220,20 @@ let doubleCount = 0;
 document.getElementById('roll-dice').addEventListener('click', () => {
     if (!currentPlayer || isBlocked) return;
 
+    document.querySelectorAll('.buy-button').forEach(btn => btn.remove());
+
+    tiles.forEach(tile => {
+        if (!tile.owner) {
+            const tileEl = document.querySelectorAll('.tile')[tile.id];
+            if (!tileEl.querySelector('.tile-price') && tile.price) {
+                const price = document.createElement('div');
+                price.classList.add('tile-price');
+                price.textContent = `${tile.price} ¤`;
+                tileEl.appendChild(price);
+            }
+        }
+    });
+
     document.getElementById('roll-dice').disabled = true;
     const roll1 = Math.floor(Math.random() * 6) + 1;
     const roll2 = Math.floor(Math.random() * 6) + 1;
@@ -131,7 +253,6 @@ document.getElementById('roll-dice').addEventListener('click', () => {
     newNextTile.addEventListener('click', () => {
         if (isDouble) {
             doubleCount++;
-            document.getElementById('roll-dice').disabled = false;
         } else {
             doubleCount = 0;
         }
@@ -143,11 +264,20 @@ document.getElementById('roll-dice').addEventListener('click', () => {
             doubleCount = 0;
         } else {
             currentPlayer.position = (currentPlayer.position + rollsum) % tiles.length;
-            socket.emit('player-move', currentPlayer);
-            handleTileAction(currentPlayer);
+
         }
 
+        socket.emit('player-move', currentPlayer);
+        handleTileAction(currentPlayer);
         newNextTile.style.display = 'none';
+
+        if (isDouble) {
+            // ale tylko jeśli pole nie wymaga płatności
+            const tile = tiles[currentPlayer.position];
+            if (tile.owner === null || tile.owner === currentPlayer.id) {
+                document.getElementById('roll-dice').disabled = false;
+            }
+        }
     });
 });
 
@@ -156,10 +286,10 @@ let isMyTurn = false;
 
 document.getElementById('next-turn').addEventListener('click', () => {
     if (isMyTurn) {
-        // Usuwanie przycisków "Kup" z planszy
+        //Usuwanie przycisków "Kup" z planszy
         document.querySelectorAll('.buy-button').forEach(btn => btn.remove());
 
-        // Przywracanie ceny na polach niekupionych
+        //Przywracanie ceny na polach niekupionych
         tiles.forEach(tile => {
             if (!tile.owner) {
                 const tileEl = document.querySelectorAll('.tile')[tile.id];
@@ -170,18 +300,6 @@ document.getElementById('next-turn').addEventListener('click', () => {
                     tileEl.appendChild(price);
                 }
             }
-            // Dodaj znacznik na kupione pole
-            // if (tile.owner){
-            //     //const ownerPlayer = playersList.find(p => p.id === tile.owner);
-            //     const tileNow = document.querySelectorAll('.tile')[tile.id];
-            //     if (!tileNow.querySelector('.owner')) {
-            //         const savedLogo = document.createElement('div');
-            //         savedLogo.classList.add('owner');
-            //         savedLogo.style.backgroundColor = currentPlayer.color;
-            //         savedLogo.title = currentPlayer.name;
-            //         tileNow.appendChild(savedLogo);
-            //     }
-            // }
         });
 
         socket.emit('end-turn');
@@ -276,8 +394,6 @@ function showJoinPopup(onJoin) {
         <div id="color-options" style="margin:10px 0;">${colorButtons}</div>
         <button id="join-game" style="padding:8px 16px; font-size:16px;">Dołącz</button>
     `;
-    //const choiceColor = popup.querySelectorAll('.color-choice');
-
 
     overlay.appendChild(popup);
     document.body.appendChild(overlay);
@@ -325,6 +441,7 @@ function createPawn(player) {
 
 // ------------------- ODBIÓR AKTUALNEJ LISTY GRACZY -------------------
 socket.on('update-players', (playersList) => {
+    globalPlayersList = playersList;
     document.querySelectorAll('.pawn').forEach(p => {
         if (!p.classList.contains('owner-marker')) p.remove();
     });
@@ -368,6 +485,17 @@ socket.on('update-blocked-colors', (usedColors) => {
     globalUsedColors = usedColors;
     console.log('Zablokowane kolory:', usedColors);
     applyColorLocks(usedColors); // próba natychmiastowego zablokowania
+});
+
+socket.on('rent-update', ({ tileId, currentPlayer }) => {
+
+    const tileEl = document.querySelectorAll('.tile')[tileId];
+    if (!tileEl) return;
+
+    const priceEl = tileEl.querySelector('.tile-price');
+    if (priceEl) {
+        priceEl.remove();
+    }
 });
 
 

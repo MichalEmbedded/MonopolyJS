@@ -99,6 +99,9 @@ io.on('connection', (socket) => {
         io.emit('property-update', { tileId, owner });
     });
 
+    socket.on('pay-rent', ({ tileId, currentPlayer }) => {
+        io.emit('rent-update', { tileId, currentPlayer });
+    });
 
 });
 

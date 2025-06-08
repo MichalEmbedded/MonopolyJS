@@ -34,7 +34,8 @@ export const tiles = [
         id: 2,
         name: "Deeds of middle earth",
         type: TILE_TYPES.DEEDS,
-        deck: "deeds"
+        deck: "deeds",
+        owner: null
     },
     {
         id: 3,
@@ -50,7 +51,8 @@ export const tiles = [
         id: 4,
         name: "Trolls Demand Payment for Passage",
         type: TILE_TYPES.TAX,
-        amount: 200
+        amount: 200,
+        owner: null
     },
     {
         id: 5,
@@ -74,7 +76,8 @@ export const tiles = [
         id: 7,
         name: "Unexpected Journey",
         type: TILE_TYPES.UNEXPECTED,
-        deck: "unexpected"
+        deck: "unexpected",
+        owner: null
     },
     {
         id: 8,
@@ -103,7 +106,8 @@ export const tiles = [
         id: 10,
         name: "Orthanc Tower",
         type: TILE_TYPES.ORTHANC,
-        isJail: true
+        isJail: true,
+        owner: null
     },
     {
         id: 11,
@@ -164,7 +168,8 @@ export const tiles = [
         id: 17,
         name: "Deeds of Middle Earth",
         type: TILE_TYPES.DEEDS,
-        deck: "deeds"
+        deck: "deeds",
+        owner: null
     },
     {
         id: 18,
@@ -192,7 +197,8 @@ export const tiles = [
     {
         id: 20,
         name: "Rest",
-        type: TILE_TYPES.REST
+        type: TILE_TYPES.REST,
+        owner: null
     },
     {
         id: 21,
@@ -208,7 +214,8 @@ export const tiles = [
         id: 22,
         name: "Unexpected Journey",
         type: TILE_TYPES.UNEXPECTED,
-        deck: "unexpected"
+        deck: "unexpected",
+        owner: null
     },
     {
         id: 23,
@@ -282,7 +289,8 @@ export const tiles = [
         id: 30,
         name: "Go to Orthanc",
         type: TILE_TYPES.GO_ORTHANC,
-        sendsTo: 10
+        sendsTo: 10,
+        owner: null
     },
     {
         id: 31,
@@ -308,7 +316,8 @@ export const tiles = [
         id: 33,
         name: "Deeds of Middle Earth",
         type: TILE_TYPES.DEEDS,
-        deck: "deeds"
+        deck: "deeds",
+        owner: null
     },
     {
         id: 34,
@@ -332,7 +341,8 @@ export const tiles = [
         id: 36,
         name: "Unexpected Journey",
         type: TILE_TYPES.UNEXPECTED,
-        deck: "unexpected"
+        deck: "unexpected",
+        owner: null
     },
     {
         id: 37,
@@ -348,7 +358,8 @@ export const tiles = [
         id: 38,
         name: "Dwarf Luxury Tax",
         type: TILE_TYPES.TAX,
-        amount: 100
+        amount: 100,
+        owner: null
     },
     {
         id: 39,
