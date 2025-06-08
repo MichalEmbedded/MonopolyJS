@@ -81,6 +81,8 @@ function showBuyButton(tile, player) {
 
 function showPayButton(tile, player) {
 
+    document.getElementById('next-turn').disabled = true;
+
     const allTiles = document.querySelectorAll('.tile');
     const tileEl = allTiles[tile.id];
 
@@ -169,6 +171,7 @@ function showPayButton(tile, player) {
             console.log(owner.money);
 
             paybutton.remove();
+            document.getElementById('next-turn').disabled = false;
 
         }
 

@@ -18,7 +18,8 @@ export const tiles = [
     {
         id: 0,
         name: "Start",
-        type: TILE_TYPES.START
+        type: TILE_TYPES.START,
+        owner: null
     },
     {
         id: 1,
