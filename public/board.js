@@ -26,6 +26,12 @@ socket.on('connect', () => {
             turnsInJail: 0,
             getOutOfJailFree: false
         };
+
+        const colorBox = document.getElementById('color-box');
+        if (colorBox) {
+            colorBox.style.backgroundColor = color;
+        }
+
         socket.emit('new-player', currentPlayer); // Wysyłamy dane nowego gracza na serwer
     });
 });
@@ -353,6 +359,21 @@ function showTaxButton(tile, player) {
     tileEl.appendChild(paybutton);
 }
 
+function goOrthanc(tile,player){
+
+    const destination = tile.sendsTo || 10; // fallback na pole 10 (Orthanc)
+
+    player.position = destination;
+
+    const wynik = document.getElementById('dice-result');
+    if (wynik) {
+        wynik.textContent = `${player.name} został wysłany do Orthanku!`;
+    }
+
+    socket.emit('player-move', player);
+    handleTileAction(player);
+}
+
 
 
 // ------------------- SPRAWDZENIE POLECENIA NA POLU -------------------
@@ -372,6 +393,8 @@ function handleTileAction(player){
         showUnexpectedButton(tile,player);
     } else if (tile.type === TILE_TYPES.TAX){
         showTaxButton(tile,player);
+    } else if (tile.type === TILE_TYPES.GO_ORTHANC){
+        goOrthanc(tile,player);
     }
 }
 

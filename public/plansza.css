@@ -1,30 +1,53 @@
+/* ---------- LOTR MONOPOLY – COMPLETE THEME ------------------------------------------- */
+/*  Autor: ChatGPT + User  |  Data: 2025‑06‑09                                           */
+
+/* ------------------------------------------------------------------------- 1 ▸ Reset */
 * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-/* ----- Layout reset --------------------------------------------------- */
 html,
 body {
     height: 100%;
-    margin: 0;
-    display: flex;
-    flex-direction: column;       /* <--- KLUCZOWA zmiana */
-    align-items: center;
-    justify-content: flex-start;  /* lub center jeśli chcesz wyśrodkować całość */
-    font-family: Arial, sans-serif;
+    font-family: "Ringbearer", "Cinzel", serif;
     font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    color: #2d1f0c;
+    background-image: url("img/map.jpg");
+    background-repeat: no-repeat;   /* nie powtarzaj */
+    background-position: center;    /* wyśrodkuj */
+    background-size: cover;
 }
 
+@font-face {
+    font-family: "Ringbearer";
+    src: url("fonts/RINGM.TTF") format("truetype");
+    font-display: swap;
+}
 
-/* ----- Game board (outer grid) --------------------------------------- */
+/* --------------------------------------------------------------- 2 ▸ Utilities */
+.hidden { display: none !important; }
+.flex   { display: flex; align-items: center; }
+
+/* ----------------------------------------------------- 3 ▸ Main board layout */
+#container {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+}
+
 #board {
     display: grid;
-
-    /* first & last row / col are larger */
     grid-template-columns: 120px repeat(9, 90px) 120px;
     grid-template-rows:    120px repeat(9, 90px) 120px;
-
-    /* corner labels = a‑d, o = centre */
     grid-template-areas:
     "c c c c c c c c c c d"
     "b o o o o o o o o o d"
@@ -37,20 +60,28 @@ body {
     "b o o o o o o o o o d"
     "b o o o o o o o o o d"
     "b a a a a a a a a a a";
+    border: 6px solid #7e5522;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, .45);
 }
 
-/* ----- Centre area (decks) ------------------------------------------ */
+.row          { display: flex; }
+#row-0        { grid-area: a; flex-direction: row-reverse; }
+#row-1        { grid-area: b; flex-direction: column-reverse; }
+#row-2        { grid-area: c; flex-direction: row; }
+#row-3        { grid-area: d; flex-direction: column; }
+
+/* ------------------------------------------- 4 ▸ Centre decks (deeds / unexpected) */
 #center {
     grid-area: o;
-    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 20px;
-    background: #f2f2f2;
-    border: 2px dashed #aaa;
-    text-align: center;
+    background: rgba(239,229,198,.9) url("img/lotr.jpg") no-repeat center / cover;
+    border: 3px dashed #7e5522;
+    backdrop-filter: blur(3px);
 }
 
 .card-stack {
@@ -61,137 +92,143 @@ body {
     justify-content: center;
     background: #fff;
     border: 2px solid #333;
-    box-shadow: 2px 2px 6px rgba(0, 0, 0, .2);
+    box-shadow: 0 0 6px rgba(0, 0, 0, .2);
     font-weight: bold;
     cursor: pointer;
-    transform-origin: 50% 50%;
     transition: transform .3s;
 }
+.card-stack:hover { transform: scale(1.05); }
+#unexpected      { transform: translate(-100%, 100%) rotate( 45deg); }
+#deeds           { transform: translate( 100%, -100%) rotate(-135deg); }
 
-.color-choice{
-    width: 30px;
-    height: 30px;
-    display: inline-block;
-    margin: 5px;
-    border: 2px solid #ccc;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-/* visually rotate and offset each deck */
-#unexpected           { transform: translate( -100%, 100%) rotate( 45deg); }
-#deeds  { transform: translate(100%, -100%) rotate(-135deg); }
-
-/* ----- Edge rows / columns ------------------------------------------ */
-.row           { display: flex; }
-
-#row-0 { grid-area: a; flex-direction: row-reverse;  }
-#row-1 { grid-area: b; flex-direction: column-reverse; }
-#row-2 { grid-area: c; flex-direction: row;           }
-#row-3 { grid-area: d; flex-direction: column;        }
-
-
-/* ----- Tiles --------------------------------------------------------- */
+/* ---------------------------------------------------------------- 5 ▸ Tiles */
 .tile {
     position: relative;
     display: flex;
     flex-direction: column;
     width: 100%;
     height: 100%;
-    border: 1px solid;
+    border: 1px solid #28220e;
+    background: #faf7f0;
 }
+.tile-color { flex: 3; border: 1px solid; }
+.tile-name  { flex: 6; text-align: center; font-weight: bold; padding: 2px; }
+.tile-price { flex: 3; text-align: center; font-weight: bold; }
 
-
-/* colour stripe + name + price sections */
-.tile-color {
-    flex: 3;
-    border: 1px solid;
-}
-.tile-name  {
-    flex: 6;
-    text-align: center;
-    font-weight: bold;
-}
-.tile-price {
-    flex: 3;
-    text-align: center;
-}
-.tile-price-cards {
-    flex: 2;
-    text-align: center;
-}
-.tile-name-cards {
-    flex: 6;
-    text-align: center;
-}
-
-/* make corner tiles square & centred */
-.row > .tile:first-child {
-    flex: 0 0 120px;
-    text-align: center;
-}
-
-/* rotate / flip text for vertical edges */
+.row > .tile:first-child { flex: 0 0 120px; text-align: center; }
 #row-1 .tile { writing-mode: vertical-rl; }
 #row-2 .tile { transform: rotate(180deg); }
 #row-3 .tile { writing-mode: vertical-rl; transform: rotate(180deg); }
 
-/* corner labels – 45° angle */
+/* Corner tilt */
 #row-0 > .tile:first-child .tile-name,
-#row-2 > .tile:first-child .tile-name {
-    transform: rotate(-45deg) translateY(38px);
-}
-
+#row-2 > .tile:first-child .tile-name { transform: rotate(-45deg) translateY(38px); }
 #row-1 > .tile:first-child .tile-name,
-#row-3 > .tile:first-child .tile-name {
-    transform: rotate(-45deg) translateX(-38px);
-}
+#row-3 > .tile:first-child .tile-name { transform: rotate(-45deg) translateX(-38px); }
 
-#dice-result{
-    margin: 10px;
-    font-size: 18px;
-    font-weight: bold;
-}
-
-#next-tile{
-    display: none;
-}
-
-.pawn {
+/* --------------------------------- 6 ▸ Pawns & owner markers */
+.pawn{
     width: 20px;
     height: 20px;
     border-radius: 50%;
     margin: auto;
     margin-top: 2px;
     border: 2px solid #000;
-    background-color: blue;
     position: relative;
     z-index: 10;
 }
-
 .owner {
     width: 20px;
     height: 20px;
     margin: auto;
     margin-top: 2px;
     border: 2px solid #000;
-    background-color: blue;
     position: relative;
     z-index: 10;
 }
+.pawn-label { font-size: 10px; text-align: center; color: #fff; font-weight: bold; }
 
-.pawn-label {
-    font-size: 10px;
-    text-align: center;
+/* -------------------------------------------------- 7 ▸ Sidebar */
+#sidebar {
+    position: fixed;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(250, 241, 216, .95);
+    border: 3px solid #7e5522;
+    border-radius: 12px;
+    padding: 15px 18px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, .35);
+    width: 210px;
+    z-index: 100;
 }
 
+#sidebar button {
+    background: #5a3e19;
+    border: 2px solid #caa45d;
+    color: #f9f2e7;
+    font-weight: bold;
+    border-radius: 6px;
+    padding: 8px;
+    cursor: pointer;
+    transition: background .2s, transform .2s;
+}
+#sidebar button:hover:not(:disabled) { background: #84602a; transform: translateY(-2px); }
+#sidebar button:disabled          { background: #aaa; border-color: #ddd; cursor: not-allowed; transform: none; }
+
+/* Dice & turn */
+#dice-result,
+#turn-indicator { font-weight: bold; font-size: 16px; text-align: center; margin-top: 4px; }
+
+/* Player color indicator */
+#player-color-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #efe5c6;
+    border: 2px solid #7e5522;
+    border-radius: 6px;
+    padding: 4px 6px;
+    font-size: 14px;
+}
+#player-color-indicator span { font-weight: bold; }
+#color-box {
+    width: 22px;
+    height: 22px;
+    border: 2px solid #000;
+    border-radius: 4px;
+}
+
+/* ------------------------------------------ 8 ▸ Surrender button */
+#surrender-button {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: #751818;
+    border: 3px solid #d9b48d;
+    color: #fff;
+    font-family: inherit;
+    font-weight: bold;
+    padding: 10px 18px;
+    border-radius: 10px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, .4);
+    cursor: pointer;
+    z-index: 1000;
+    transition: transform .15s, box-shadow .15s;
+}
+#surrender-button:hover { transform: scale(1.05); box-shadow: 0 0 14px rgba(0, 0, 0, .6); }
+
+/* ------------------------------------------- 9 ▸ Popup join */
 .join {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, .55);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -199,91 +236,32 @@ body {
 }
 
 .popup {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
+    background: #faf7f0;
+    border: 4px solid #7e5522;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, .4);
     text-align: center;
 }
 
-#container {
-    position: relative;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 20px;
-}
-
-#sidebar {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    background-color: rgba(255, 255, 255, 0.95);
-    padding: 10px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    z-index: 100;
-}
-
-#sidebar button {
-    padding: 10px;
-    font-size: 16px;
+.color-choice {
+    width: 30px;
+    height: 30px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
     cursor: pointer;
-    background-color: #2ecc71;
-    border: none;
-    color: white;
-    border-radius: 5px;
-    transition: background-color 0.2s;
-    min-width: 120px;
+    display: inline-block;
+    margin: 4px;
 }
+.color-choice:hover { border-color: #7e5522; }
 
-#sidebar button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-}
-
-#sidebar button:hover:not(:disabled) {
-    background-color: #27ae60;
-}
-
-#dice-result, #turn-indicator {
-    font-weight: bold;
-    font-size: 16px;
-    text-align: center;
-}
-
-#surrender-button {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    padding: 10px 16px;
-    background-color: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 14px;
-    cursor: pointer;
-    z-index: 1000;
-}
-
-
-/* --- Responsywność --- */
+/* ------------------------------------------------ 10 ▸ Responsive */
 @media (max-width: 768px) {
     #sidebar {
         position: static;
-        flex-direction: column;
-        width: 100%;
-        align-items: center;
-        justify-content: center;
-    }
-
-    #sidebar button {
-        flex: 1 1 auto;
+        transform: none;
         width: 90%;
-        margin: 5px 0;
+        margin-top: 10px;
     }
 }
+
