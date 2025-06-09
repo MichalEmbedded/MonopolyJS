@@ -111,6 +111,31 @@ io.on('connection', (socket) => {
         io.emit('rent-update', { tileId, currentPlayer });
     });
 
+    socket.on('player-surrender', (player) => {
+        console.log(`Gracz ${player.name} się poddał.`);
+
+        delete players[player.id];
+        usedColors.delete(player.color);
+
+        const index = playerOrder.indexOf(player.id);
+        if (index !== -1) {
+            playerOrder.splice(index, 1);
+            if (index <= currentTurnIndex && currentTurnIndex > 0) {
+                currentTurnIndex--;
+            }
+        }
+
+        io.emit('update-blocked-colors', Array.from(usedColors));
+        io.emit('update-players', Object.values(players));
+
+        if (playerOrder.length === 0) {
+            currentTurnIndex = 0;
+        } else {
+            currentTurnIndex %= playerOrder.length;
+            io.emit('current-turn', playerOrder[currentTurnIndex]);
+        }
+    });
+
 });
 
 server.listen(3000, () => {

@@ -125,6 +125,7 @@ export const tiles = [
         name: "The Prancing Pony",
         type: TILE_TYPES.PUB,
         price: 150,
+        rent: [25, 50, 150, 450, 625, 750],
         owner: null
     },
     {
@@ -271,6 +272,7 @@ export const tiles = [
         name: "The Green Dragon",
         type: TILE_TYPES.PUB,
         price: 150,
+        rent: [25, 50, 150, 450, 625, 750],
         owner: null
     },
     {

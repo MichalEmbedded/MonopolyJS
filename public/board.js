@@ -1,6 +1,7 @@
 // ------------------- IMPORT DANYCH PLANSZY -------------------
 import {TILE_TYPES, tiles} from './tiles.js';
 import {deedsDeck} from './deedsCards.js';
+import {unexpectedDeck} from './unexpectedCards.js';
 
 const socket = io(); // Połączenie z serwerem przez Socket.io
 window.socket = socket;
@@ -201,6 +202,7 @@ function showPayButton(tile, player) {
 
 function showDeedsButton(tile, player) {
 
+    document.getElementById('unexpected').disabled = false;
     document.getElementById('next-turn').disabled = true;
 
     const deedsButton = document.getElementById('deeds');
@@ -225,9 +227,132 @@ function showDeedsButton(tile, player) {
             socket.emit('update-player', player);
         }
 
+        document.getElementById('unexpected').disabled = true;
         document.getElementById('next-turn').disabled = false;
     });
 }
+
+function showUnexpectedButton(tile, player) {
+
+    document.getElementById('unexpected').disabled = false;
+    document.getElementById('next-turn').disabled = true;
+
+    const unexButton = document.getElementById('unexpected');
+
+    const newUnexButton = unexButton.cloneNode(true);
+    unexButton.parentNode.replaceChild(newUnexButton, unexButton);
+
+    newUnexButton.addEventListener('click', () => {
+        if (!isMyTurn) return;
+        const card = unexpectedDeck[Math.floor(Math.random() * deedsDeck.length)];
+        alert(card.text);
+
+        if (card.action) {
+            const modified = new Set();
+            card.action(player, globalPlayersList, socket.emit.bind(socket), modified);
+            modified.add(player);
+
+            modified.forEach(p => socket.emit('update-player', p));
+            handleTileAction(player);
+
+        } else {
+            socket.emit('update-player', player);
+        }
+
+        document.getElementById('unexpected').disabled = true;
+        document.getElementById('next-turn').disabled = false;
+    });
+}
+
+function showTaxButton(tile, player) {
+    document.getElementById('next-turn').disabled = true;
+
+    const allTiles = document.querySelectorAll('.tile');
+    const tileEl = allTiles[tile.id];
+
+    if (tileEl.querySelector('.pay-button')) return;
+
+    const taxAmount = tile.amount;
+
+    const paybutton = document.createElement('button');
+    paybutton.textContent = `Zapłać ${taxAmount}¤`;
+    paybutton.className = 'pay-button';
+    paybutton.style.marginTop = '4px';
+    paybutton.style.padding = '2px 6px';
+    paybutton.style.cursor = 'pointer';
+
+    paybutton.addEventListener('click', () => {
+        if (player.money >= taxAmount) {
+            player.money -= taxAmount;
+
+            socket.emit('update-player', player);
+
+            document.getElementById('moneygood').textContent = `💰 ${player.money}¤`;
+            paybutton.remove();
+            document.getElementById('next-turn').disabled = false;
+        } else {
+            alert("Nie masz wystarczająco pieniędzy!");
+            const playerOwnedTiles = tiles.filter(tile => tile.owner === player.id);
+
+            if (playerOwnedTiles.length > 0) {
+                const sellPopup = document.createElement('div');
+                sellPopup.style.position = 'fixed';
+                sellPopup.style.top = '0';
+                sellPopup.style.left = '0';
+                sellPopup.style.width = '100%';
+                sellPopup.style.height = '100%';
+                sellPopup.style.background = 'rgba(0,0,0,0.6)';
+                sellPopup.style.display = 'flex';
+                sellPopup.style.alignItems = 'center';
+                sellPopup.style.justifyContent = 'center';
+                sellPopup.style.zIndex = '10000';
+
+                const content = document.createElement('div');
+                content.style.background = '#fff';
+                content.style.padding = '20px';
+                content.style.borderRadius = '8px';
+                content.style.maxWidth = '400px';
+                content.style.maxHeight = '80vh';
+                content.style.overflowY = 'auto';
+
+                content.innerHTML = `<h3>Sprzedaj pole</h3><table style="width:100%; border-collapse: collapse;">
+        <thead><tr><th>Nazwa</th><th>Cena</th><th></th></tr></thead><tbody></tbody></table>`;
+
+                const tbody = content.querySelector('tbody');
+
+                playerOwnedTiles.forEach(t => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+            <td style="padding: 5px;">${t.name}</td>
+            <td style="padding: 5px;">${Math.floor(t.price * 0.5)}¤</td>
+            <td style="padding: 5px;"><button>Sprzedaj</button></td>
+        `;
+
+                    tr.querySelector('button').addEventListener('click', () => {
+                        // sprzedaż pola
+                        player.money += Math.floor(t.price * 0.5);
+                        t.owner = null;
+
+                        socket.emit('update-player', player);
+                        socket.emit('property-bought', { tileId: t.id, owner: null });
+
+                        document.body.removeChild(sellPopup);
+                    });
+
+                    tbody.appendChild(tr);
+                });
+
+                sellPopup.appendChild(content);
+                document.body.appendChild(sellPopup);
+            }
+
+            return;
+        }
+    });
+
+    tileEl.appendChild(paybutton);
+}
+
 
 
 // ------------------- SPRAWDZENIE POLECENIA NA POLU -------------------
@@ -243,6 +368,10 @@ function handleTileAction(player){
         }
     } else if (tile.type === TILE_TYPES.DEEDS){
         showDeedsButton(tile,player);
+    } else if (tile.type === TILE_TYPES.UNEXPECTED){
+        showUnexpectedButton(tile,player);
+    } else if (tile.type === TILE_TYPES.TAX){
+        showTaxButton(tile,player);
     }
 }
 
@@ -354,6 +483,7 @@ document.getElementById('next-turn').addEventListener('click', () => {
                 }
             }
         });
+        document.getElementById('next-tile').style.display = 'none';
 
         socket.emit('end-turn');
     }
@@ -579,6 +709,14 @@ function applyColorLocks(usedColors) {
         }
     });
 }
+
+document.getElementById('surrender-button').addEventListener('click', () => {
+    if (confirm('Czy na pewno chcesz się poddać?')) {
+        socket.emit('player-surrender', currentPlayer);
+        document.getElementById('surrender-button').disabled = true;
+    }
+});
+
 
 
 
