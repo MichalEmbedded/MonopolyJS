@@ -1,5 +1,6 @@
 // ------------------- IMPORT DANYCH PLANSZY -------------------
 import {TILE_TYPES, tiles} from './tiles.js';
+import {deedsDeck} from './deedsCards.js';
 
 const socket = io(); // Połączenie z serwerem przez Socket.io
 window.socket = socket;
@@ -21,7 +22,8 @@ socket.on('connect', () => {
             money: 1500,
             properties: [],
             inJail: false,
-            turnsInJail: 0
+            turnsInJail: 0,
+            getOutOfJailFree: false
         };
         socket.emit('new-player', currentPlayer); // Wysyłamy dane nowego gracza na serwer
     });
@@ -197,6 +199,37 @@ function showPayButton(tile, player) {
 
 }
 
+function showDeedsButton(tile, player) {
+
+    document.getElementById('next-turn').disabled = true;
+
+    const deedsButton = document.getElementById('deeds');
+
+    const newButton = deedsButton.cloneNode(true);
+    deedsButton.parentNode.replaceChild(newButton, deedsButton);
+
+    newButton.addEventListener('click', () => {
+        if (!isMyTurn) return;
+        const card = deedsDeck[Math.floor(Math.random() * deedsDeck.length)];
+        alert(card.text);
+
+        if (card.action) {
+            const modified = new Set();
+            card.action(player, globalPlayersList, socket.emit.bind(socket), modified);
+            modified.add(player);
+
+            modified.forEach(p => socket.emit('update-player', p));
+            handleTileAction(player);
+
+        } else {
+            socket.emit('update-player', player);
+        }
+
+        document.getElementById('next-turn').disabled = false;
+    });
+}
+
+
 // ------------------- SPRAWDZENIE POLECENIA NA POLU -------------------
 function handleTileAction(player){
     const tile = tiles[player.position];
@@ -208,6 +241,8 @@ function handleTileAction(player){
             console.log('Wywołuję showPayButton dla pola:', tile.name);
             showPayButton(tile,player);
         }
+    } else if (tile.type === TILE_TYPES.DEEDS){
+        showDeedsButton(tile,player);
     }
 }
 
@@ -288,8 +323,12 @@ document.getElementById('roll-dice').addEventListener('click', () => {
         if (isDouble) {
             // ale tylko jeśli pole nie wymaga płatności
             const tile = tiles[currentPlayer.position];
+
             if (tile.owner === null || tile.owner === currentPlayer.id) {
                 document.getElementById('roll-dice').disabled = false;
+            }
+            if (tile.type === TILE_TYPES.DEEDS || tile.type === TILE_TYPES.UNEXPECTED || tile.type === TILE_TYPES.TAX) {
+                document.getElementById('roll-dice').disabled = true;
             }
         }
     });
