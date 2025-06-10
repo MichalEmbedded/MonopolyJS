@@ -9,20 +9,20 @@
 }
 
 html,
-body {
-    height: 100%;
-    font-family: "Ringbearer", "Cinzel", serif;
-    font-size: 14px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    color: #2d1f0c;
-    background-image: url("img/map.jpg");
-    background-repeat: no-repeat;   /* nie powtarzaj */
-    background-position: center;    /* wyśrodkuj */
-    background-size: cover;
+body{
+    height:100%;
+    font-family:"Ringbearer","Cinzel",serif;
+    font-size:14px;
+    color:#2d1f0c;
+
+    /* mapa pokrywa cały viewport, zachowuje proporcje
+       ─ jeśli ekran szerszy / węższy, część mapy może wyjść poza kadr */
+    background:#f3f0e6 url("img/map.jpg") no-repeat center/cover;
+    /*  ↑            ↑          ↑
+       brak powtórzeń  wyśrodkuj  cover = wypełnij */
 }
+
+
 
 @font-face {
     font-family: "Ringbearer";

@@ -138,7 +138,7 @@ io.on('connection', (socket) => {
 
 });
 
-server.listen(3000, () => {
+server.listen(3000, '0.0.0.0',() => {
     console.log('Serwer działa na http://localhost:3000');
 });
 

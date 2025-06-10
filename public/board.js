@@ -207,17 +207,20 @@ function showPayButton(tile, player) {
 }
 
 function showDeedsButton(tile, player) {
-
-    document.getElementById('unexpected').disabled = false;
-    document.getElementById('next-turn').disabled = true;
-
     const deedsButton = document.getElementById('deeds');
 
     const newButton = deedsButton.cloneNode(true);
     deedsButton.parentNode.replaceChild(newButton, deedsButton);
 
+    newButton.disabled = false; // odblokuj na start
+    document.getElementById('unexpected').disabled = true;
+    document.getElementById('next-turn').disabled = true;
+
     newButton.addEventListener('click', () => {
-        if (!isMyTurn) return;
+        if (!isMyTurn || newButton.disabled) return;
+
+        newButton.disabled = true; // zablokuj natychmiast po kliknięciu
+
         const card = deedsDeck[Math.floor(Math.random() * deedsDeck.length)];
         alert(card.text);
 
@@ -228,29 +231,30 @@ function showDeedsButton(tile, player) {
 
             modified.forEach(p => socket.emit('update-player', p));
             handleTileAction(player);
-
         } else {
             socket.emit('update-player', player);
         }
 
-        document.getElementById('unexpected').disabled = true;
         document.getElementById('next-turn').disabled = false;
     });
 }
 
 function showUnexpectedButton(tile, player) {
 
-    document.getElementById('unexpected').disabled = false;
-    document.getElementById('next-turn').disabled = true;
-
     const unexButton = document.getElementById('unexpected');
 
     const newUnexButton = unexButton.cloneNode(true);
     unexButton.parentNode.replaceChild(newUnexButton, unexButton);
 
+    newUnexButton.disabled = false;
+    document.getElementById('deeds').disabled = true;
+    document.getElementById('next-turn').disabled = true;
+
     newUnexButton.addEventListener('click', () => {
         if (!isMyTurn) return;
-        const card = unexpectedDeck[Math.floor(Math.random() * deedsDeck.length)];
+
+        newUnexButton.disabled = true;
+        const card = unexpectedDeck[Math.floor(Math.random() * unexpectedDeck.length)];
         alert(card.text);
 
         if (card.action) {
@@ -265,7 +269,6 @@ function showUnexpectedButton(tile, player) {
             socket.emit('update-player', player);
         }
 
-        document.getElementById('unexpected').disabled = true;
         document.getElementById('next-turn').disabled = false;
     });
 }
@@ -451,6 +454,9 @@ document.getElementById('roll-dice').addEventListener('click', () => {
     const newNextTile = nextTile.cloneNode(true);
     nextTile.parentNode.replaceChild(newNextTile, nextTile);
 
+    newNextTile.disabled = false;
+    newNextTile.style.display = 'flex';
+
     newNextTile.addEventListener('click', () => {
         if (isDouble) {
             doubleCount++;
@@ -470,6 +476,8 @@ document.getElementById('roll-dice').addEventListener('click', () => {
 
         socket.emit('player-move', currentPlayer);
         handleTileAction(currentPlayer);
+
+        newNextTile.disabled = true;
         newNextTile.style.display = 'none';
 
         if (isDouble) {
@@ -507,6 +515,7 @@ document.getElementById('next-turn').addEventListener('click', () => {
             }
         });
         document.getElementById('next-tile').style.display = 'none';
+        document.getElementById('next-tile').disabled = true;
 
         socket.emit('end-turn');
     }
