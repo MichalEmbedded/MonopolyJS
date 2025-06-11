@@ -1,26 +1,20 @@
-/* ---------- LOTR MONOPOLY – COMPLETE THEME ------------------------------------------- */
-/*  Autor: ChatGPT + User  |  Data: 2025‑06‑09                                           */
-
-/* ------------------------------------------------------------------------- 1 ▸ Reset */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
-html,
-body{
-    height:100%;
-    font-family:"Ringbearer","Cinzel",serif;
-    font-size:14px;
-    color:#2d1f0c;
+html, body {
+    height: 100%;
+    width: 100%;
+    font-family: "Ringbearer", "Cinzel", serif;
+    font-size: 14px;
+    color: #2d1f0c;
 
-    /* mapa pokrywa cały viewport, zachowuje proporcje
-       ─ jeśli ekran szerszy / węższy, część mapy może wyjść poza kadr */
-    background:#f3f0e6 url("img/map.jpg") no-repeat center/cover;
-    /*  ↑            ↑          ↑
-       brak powtórzeń  wyśrodkuj  cover = wypełnij */
+    background: url("img/parchment.jpg") no-repeat center center fixed;
+    background-size: cover;
 }
+
 
 
 
@@ -30,11 +24,9 @@ body{
     font-display: swap;
 }
 
-/* --------------------------------------------------------------- 2 ▸ Utilities */
 .hidden { display: none !important; }
 .flex   { display: flex; align-items: center; }
 
-/* ----------------------------------------------------- 3 ▸ Main board layout */
 #container {
     position: relative;
     display: flex;
@@ -71,7 +63,6 @@ body{
 #row-2        { grid-area: c; flex-direction: row; }
 #row-3        { grid-area: d; flex-direction: column; }
 
-/* ------------------------------------------- 4 ▸ Centre decks (deeds / unexpected) */
 #center {
     grid-area: o;
     display: flex;
@@ -101,7 +92,6 @@ body{
 #unexpected      { transform: translate(-100%, 100%) rotate( 45deg); }
 #deeds           { transform: translate( 100%, -100%) rotate(-135deg); }
 
-/* ---------------------------------------------------------------- 5 ▸ Tiles */
 .tile {
     position: relative;
     display: flex;
@@ -120,13 +110,11 @@ body{
 #row-2 .tile { transform: rotate(180deg); }
 #row-3 .tile { writing-mode: vertical-rl; transform: rotate(180deg); }
 
-/* Corner tilt */
 #row-0 > .tile:first-child .tile-name,
 #row-2 > .tile:first-child .tile-name { transform: rotate(-45deg) translateY(38px); }
 #row-1 > .tile:first-child .tile-name,
 #row-3 > .tile:first-child .tile-name { transform: rotate(-45deg) translateX(-38px); }
 
-/* --------------------------------- 6 ▸ Pawns & owner markers */
 .pawn{
     width: 20px;
     height: 20px;
@@ -148,7 +136,6 @@ body{
 }
 .pawn-label { font-size: 10px; text-align: center; color: #fff; font-weight: bold; }
 
-/* -------------------------------------------------- 7 ▸ Sidebar */
 #sidebar {
     position: fixed;
     top: 50%;
@@ -179,11 +166,9 @@ body{
 #sidebar button:hover:not(:disabled) { background: #84602a; transform: translateY(-2px); }
 #sidebar button:disabled          { background: #aaa; border-color: #ddd; cursor: not-allowed; transform: none; }
 
-/* Dice & turn */
 #dice-result,
 #turn-indicator { font-weight: bold; font-size: 16px; text-align: center; margin-top: 4px; }
 
-/* Player color indicator */
 #player-color-indicator {
     display: flex;
     align-items: center;
@@ -202,7 +187,6 @@ body{
     border-radius: 4px;
 }
 
-/* ------------------------------------------ 8 ▸ Surrender button */
 #surrender-button {
     position: fixed;
     top: 20px;
@@ -221,7 +205,6 @@ body{
 }
 #surrender-button:hover { transform: scale(1.05); box-shadow: 0 0 14px rgba(0, 0, 0, .6); }
 
-/* ------------------------------------------- 9 ▸ Popup join */
 .join {
     position: fixed;
     top: 0;
@@ -255,7 +238,6 @@ body{
 }
 .color-choice:hover { border-color: #7e5522; }
 
-/* ------------------------------------------------ 10 ▸ Responsive */
 @media (max-width: 768px) {
     #sidebar {
         position: static;

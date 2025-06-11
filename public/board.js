@@ -8,6 +8,8 @@ window.socket = socket;
 let currentPlayer = null; // Dane bieżącego gracza
 let globalUsedColors = [];
 let globalPlayersList = [];
+let deedsUsed = false;
+let unexUsed = false;
 
 // ------------------- POŁĄCZENIE Z SERWEREM -------------------
 socket.on('connect', () => {
@@ -209,17 +211,21 @@ function showPayButton(tile, player) {
 function showDeedsButton(tile, player) {
     const deedsButton = document.getElementById('deeds');
 
-    const newButton = deedsButton.cloneNode(true);
-    deedsButton.parentNode.replaceChild(newButton, deedsButton);
+    if (deedsUsed) return;
+    deedsUsed = true;
 
-    newButton.disabled = false; // odblokuj na start
+    deedsButton.disabled = false;
     document.getElementById('unexpected').disabled = true;
     document.getElementById('next-turn').disabled = true;
+
+    // Usuwamy poprzednie eventy
+    const newButton = deedsButton.cloneNode(true);
+    deedsButton.parentNode.replaceChild(newButton, deedsButton);
 
     newButton.addEventListener('click', () => {
         if (!isMyTurn || newButton.disabled) return;
 
-        newButton.disabled = true; // zablokuj natychmiast po kliknięciu
+        newButton.disabled = true;
 
         const card = deedsDeck[Math.floor(Math.random() * deedsDeck.length)];
         alert(card.text);
@@ -236,19 +242,23 @@ function showDeedsButton(tile, player) {
         }
 
         document.getElementById('next-turn').disabled = false;
-    });
+    }, { once: true });
 }
+
 
 function showUnexpectedButton(tile, player) {
 
     const unexButton = document.getElementById('unexpected');
 
-    const newUnexButton = unexButton.cloneNode(true);
-    unexButton.parentNode.replaceChild(newUnexButton, unexButton);
+    if (unexUsed) return;
+    unexUsed = true;
 
-    newUnexButton.disabled = false;
+    unexButton.disabled = false;
     document.getElementById('deeds').disabled = true;
     document.getElementById('next-turn').disabled = true;
+
+    const newUnexButton = unexButton.cloneNode(true);
+    unexButton.parentNode.replaceChild(newUnexButton, unexButton);
 
     newUnexButton.addEventListener('click', () => {
         if (!isMyTurn) return;
@@ -270,7 +280,7 @@ function showUnexpectedButton(tile, player) {
         }
 
         document.getElementById('next-turn').disabled = false;
-    });
+    }, { once: true });
 }
 
 function showTaxButton(tile, player) {
@@ -499,6 +509,8 @@ let isMyTurn = false;
 
 document.getElementById('next-turn').addEventListener('click', () => {
     if (isMyTurn) {
+        deedsUsed = false;
+        unexUsed = false;
         //Usuwanie przycisków "Kup" z planszy
         document.querySelectorAll('.buy-button').forEach(btn => btn.remove());
 

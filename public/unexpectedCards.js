@@ -3,7 +3,11 @@ export const unexpectedDeck = [
         id: 1,
         text: "You encounter Gollum – lose 50¤ while escaping.",
         action: (player, _allPlayers, _emit, modified) => {
-            player.money -= 50;
+            if(player.money >= 50) {
+                player.money -= 50;
+            }else{
+                player.money = 0;
+            }
             modified.add(player);
         }
     },
